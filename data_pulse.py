@@ -97,12 +97,30 @@ def disable_data_register():
 def enable_data_register():
    GPIO.output(DATA_ENABLE, GPIO.LOW)
 
-def read_eeprom():
-   enable_eeprom()
-   disable_data_register()
-   GPIO.output(EEPROM_OE,GPIO.LOW)
-   read_data()
+def enable_eeprom_read():
+   GPIO.output(EEPROM_OE, GPIO.LOW)
+
+def disable_eeprom_read():
    GPIO.output(EEPROM_OE,GPIO.HIGH)
+
+def read_eeprom():
+   disable_data_register()
+   time.sleep(1)
+   enable_eeprom()
+   enable_eeprom_read()
+   read_data()
+   disable_eeprom_read()
+
+def write_eeprom(addr, data):
+   disable_eeprom_read()
+   enable_data_register()
+   enable_eeprom()
+   set_addr(addr)
+   set_data(data)
+   push_data()
+   GPIO.output(EEPROM_WE,GPIO.LOW)
+   time.sleep(0.000001)
+   GPIO.output(EEPROM_WE,GPIO.HIGH)
 
 def read_data():
    #We need to disable the data register output so it doesn't cause contention with the eeprom output
@@ -130,7 +148,17 @@ def read_data():
 #   pulse_clk()
 #   push()
 
-set_addr(8192)
+set_addr(0x0)
+read_eeprom()
+time.sleep(2)
+write_eeprom(0x0,0xFA)
+set_addr(0xFF)
+read_eeprom()
+set_addr(0x0)
+read_eeprom()
+time.sleep(2)
+disable_eeprom()
+
 
 while True:
    enable_data_register()
